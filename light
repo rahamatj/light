@@ -1,0 +1,162 @@
+#! /bin/sh
+
+echo ""
+echo "-- ----------- --"
+echo "-- LIGHTING UP --"
+echo "-- ----------- --"
+echo ""
+
+if [ $# -eq 0 ]
+    then
+        project_name=${PWD##*/}
+    else
+        project_name=$1
+        echo "-- Creating new laravel project: "$project_name" --"
+        echo ""
+        composer create-project --prefer-dist laravel/laravel $project_name
+        cd $project_name
+fi
+
+echo "-- Requiring Homestead --"
+echo ""
+composer require laravel/homestead --dev
+
+project_url=$project_name.lcl.net
+pma_url=$project_name.pma.net
+
+database_name=${project_name//-/_}
+
+read -e -p 'Vagrant Box IP: ' -i '192.168.10.10' ip
+read -e -p 'Vagrant Box Memory: ' -i '512' memory
+read -e -p 'Vagrant Box CPUs: ' -i '1' cpus
+echo ""
+
+echo "-- Creating Homestead.yaml --"
+
+cat > Homestead.yaml <<EOF
+ip: $ip
+memory: $memory
+cpus: $cpus
+provider: virtualbox
+authorize: ~/.ssh/id_rsa.pub
+keys:
+    - ~/.ssh/id_rsa
+folders:
+    -
+        map: $(pwd)
+        to: /home/vagrant/code
+sites:
+    -
+        map: $project_url
+        to: /home/vagrant/code/public
+    -
+        map: $pma_url
+        to: /home/vagrant/phpmyadmin
+databases:
+    - $database_name
+name: $project_name
+hostname: $project_name
+EOF
+
+echo "-- Creating Vagrantfile --"
+
+cat > Vagrantfile <<EOF
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'json'
+require 'yaml'
+
+VAGRANTFILE_API_VERSION ||= "2"
+confDir = \$confDir ||= File.expand_path("vendor/laravel/homestead", File.dirname(__FILE__))
+
+homesteadYamlPath = File.expand_path("Homestead.yaml", File.dirname(__FILE__))
+homesteadJsonPath = File.expand_path("Homestead.json", File.dirname(__FILE__))
+afterScriptPath = "after.sh"
+customizationScriptPath = "user-customizations.sh"
+aliasesPath = "aliases"
+
+require File.expand_path(confDir + '/scripts/homestead.rb')
+
+Vagrant.require_version '>= 1.9.0'
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    if File.exist? aliasesPath then
+        config.vm.provision "file", source: aliasesPath, destination: "/tmp/bash_aliases"
+        config.vm.provision "shell" do |s|
+            s.inline = "awk '{ sub(\"\r$\", \"\"); print }' /tmp/bash_aliases > /home/vagrant/.bash_aliases"
+        end
+    end
+
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui = true
+    end
+
+    config.vm.boot_timeout = 600
+
+    if File.exist? homesteadYamlPath then
+        settings = YAML::load(File.read(homesteadYamlPath))
+    elsif File.exist? homesteadJsonPath then
+        settings = JSON::parse(File.read(homesteadJsonPath))
+    else
+        abort "Homestead settings file not found in " + File.dirname(__FILE__)
+    end
+
+    Homestead.configure(config, settings)
+
+    if File.exist? afterScriptPath then
+        config.vm.provision "shell", path: afterScriptPath, privileged: false, keep_color: true
+    end
+
+    if File.exist? customizationScriptPath then
+        config.vm.provision "shell", path: customizationScriptPath, privileged: false, keep_color: true
+    end
+
+    if defined? VagrantPlugins::HostsUpdater
+        config.hostsupdater.aliases = settings['sites'].map { |site| site['map'] }
+    end
+end
+EOF
+
+echo "-- Creating after.sh --"
+
+cat > after.sh <<EOF
+#!/bin/sh
+
+curl -sS https://raw.githubusercontent.com/rahamatjahan/pma/master/pma.sh | sh
+EOF
+
+echo "-- Adding project domains in /etc/hosts file --"
+echo ""
+
+if ! grep -q "$ip $project_url" /etc/hosts
+    then
+        sudo -- sh -c -e "echo '' >> /etc/hosts"
+        sudo -- sh -c -e "echo '$ip $project_url' >> /etc/hosts"
+fi
+
+if ! grep -q "$ip $pma_url" /etc/hosts
+    then
+        sudo -- sh -c -e "echo '$ip $pma_url' >> /etc/hosts"
+fi
+
+echo ""
+echo "-- --- --"
+echo "-- LIT --"
+echo "-- --- --"
+echo ""
+
+echo "Vagrant Box IP: "$ip
+echo "Vagrant Box Memory: "$memory
+echo "Vagrant Box CPUs: "$cpus
+echo "Vagrant Box name: "$project_name
+echo "Vagrant Box hostname: "$project_name
+echo ""
+
+echo "Project name: "$project_name
+echo "Project database: "$database_name
+echo "Project URL: http://"$project_url
+echo "PHPMyAdmin URL: http://"$pma_url
+echo ""
+
+echo "Run 'vagarnt up' to get your box up and running"
