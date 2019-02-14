@@ -27,6 +27,7 @@ pma_url=$project_name.pma.net
 
 database_name=${project_name//-/_}
 
+echo ""
 read -e -p 'Vagrant Box IP: ' -i '192.168.10.10' ip
 read -e -p 'Vagrant Box Memory: ' -i '512' memory
 read -e -p 'Vagrant Box CPUs: ' -i '1' cpus
@@ -126,6 +127,9 @@ cat > after.sh <<EOF
 
 curl -sS https://raw.githubusercontent.com/rahamatjahan/pma/master/pma.sh | sh
 EOF
+
+echo "-- Changing .env DB_DATABASE --"
+sed -i "s/\(DB_DATABASE *= *\).*/\1$database_name/" .env
 
 echo "-- Adding project domains in /etc/hosts file --"
 echo ""
