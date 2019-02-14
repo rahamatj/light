@@ -19,6 +19,7 @@ fi
 
 echo "-- Requiring Homestead --"
 echo ""
+
 composer require laravel/homestead --dev
 
 project_url=$project_name.lcl.net
