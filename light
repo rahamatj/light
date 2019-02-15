@@ -55,10 +55,12 @@ if [ $# -eq 0 ]
         cd $project_name
 fi
 
-echo "-- Requiring Homestead --"
-echo ""
-
-composer require laravel/homestead --dev
+if [ ! -d vendor/laravel/homestead ]
+    then
+        echo "-- Requiring Homestead --"
+        echo ""
+        composer require laravel/homestead --dev
+fi
 
 project_url=$project_name.lcl.net
 pma_url=$project_name.pma.net
