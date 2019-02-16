@@ -42,17 +42,25 @@ echo ""
 echo "-- ----------- --"
 echo "-- LIGHTING UP --"
 echo "-- ----------- --"
-echo ""
 
 if [ $# -eq 0 ]
     then
         project_name=${PWD##*/}
     else
         project_name=$1
-        echo "-- Creating new laravel project: "$project_name" --"
+	echo ""
+        echo "-- Creating new laravel project: $project_name --"
         echo ""
         composer create-project --prefer-dist laravel/laravel $project_name
         cd $project_name
+fi
+
+if [ ! -d vendor ]
+    then
+	echo ""
+        echo "-- Running 'composer install' --"
+        echo ""
+        composer install
 fi
 
 if [ ! -d vendor/laravel/homestead ]
@@ -172,16 +180,16 @@ cat > after.sh <<EOF
 curl -sS https://raw.githubusercontent.com/rahamatjahan/pma/master/pma.sh | sh
 EOF
 
-echo "-- Changing .env APP_NAME --"
+echo "-- Changing .env APP_NAME to '$app_name' --"
 sed -i "s/\(APP_NAME *= *\).*/\1\"$app_name\"/" .env
 
-echo "-- Changing .env APP_URL --"
+echo "-- Changing .env APP_URL to 'http://$project_url' --"
 sed -i "s/\(APP_URL *= *\).*/\1http:\/\/$project_url/" .env
 
-echo "-- Changing .env DB_DATABASE --"
+echo "-- Changing .env DB_DATABASE to '$database_name' --"
 sed -i "s/\(DB_DATABASE *= *\).*/\1$database_name/" .env
 
-echo "-- Adding project domains in /etc/hosts file --"
+echo "-- Adding project domains in '/etc/hosts' file --"
 echo ""
 
 if ! grep -q "$ip $project_url" /etc/hosts
@@ -214,4 +222,4 @@ echo "Project URL: http://"$project_url
 echo "PHPMyAdmin URL: http://"$pma_url
 echo ""
 
-echo "Run 'vagarnt up' to get your box up and running"
+echo "Run 'vagarnt up' from inside '$project_name' directory to get your box up and running"
