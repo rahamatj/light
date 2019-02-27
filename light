@@ -128,7 +128,7 @@ homesteadYamlPath = File.expand_path("Homestead.yaml", File.dirname(__FILE__))
 homesteadJsonPath = File.expand_path("Homestead.json", File.dirname(__FILE__))
 afterScriptPath = "after.sh"
 customizationScriptPath = "user-customizations.sh"
-aliasesPath = "aliases"
+aliasesPath = "vendor/laravel/homestead/resources/aliases"
 
 require File.expand_path(confDir + '/scripts/homestead.rb')
 
