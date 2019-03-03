@@ -103,9 +103,11 @@ sites:
     -
         map: $project_url
         to: /home/vagrant/code/public
+        php: "7.1"
     -
         map: $pma_url
         to: /home/vagrant/phpmyadmin
+        php: "7.1"
 databases:
     - $database_name
 name: $project_name
