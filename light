@@ -179,7 +179,7 @@ echo "-- Creating after.sh --"
 cat > after.sh <<EOF
 #!/bin/sh
 
-curl -sS https://raw.githubusercontent.com/rahamatjahan/pma/master/pma.sh | sh
+curl -sS https://raw.githubusercontent.com/rahamatj/pma/master/pma.sh | sh
 EOF
 
 echo "-- Changing .env APP_NAME to '$app_name' --"
