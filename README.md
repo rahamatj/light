@@ -4,7 +4,7 @@ Simple shell script that creates a new Laravel project and installs Homestead ([
 
 ## Installation
 
-- `git clone https://github.com/rahamatjahan/light.git`
+- `git clone https://github.com/rahamatj/light.git`
 - `cd light`
 - `chmod +x light`
 - `sudo cp light /usr/local/bin`
